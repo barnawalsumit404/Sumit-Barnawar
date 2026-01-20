@@ -4,12 +4,13 @@ import { getStorage } from "firebase/storage";
 import { collection, addDoc } from "@firebase/firestore";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDJPq9a0YPoQYkpQ-Uaw7aXQRXzzqOKzFA",
-    authDomain: "web-kelas-tes.firebaseapp.com",
-    projectId: "web-kelas-tes",
-    storageBucket: "web-kelas-tes.appspot.com",
-    messagingSenderId: "890817433268",
-    appId: "1:890817433268:web:11e5258f8864a6174c11e1"
+    apiKey: "AIzaSyBM4YuKWCPxKJnFnsW1KQWTWSuIG8JKzlw",
+    authDomain: "sumit-portfolio-1efc3.firebaseapp.com",
+    projectId: "sumit-portfolio-1efc3",
+    storageBucket: "sumit-portfolio-1efc3.firebasestorage.app",
+    messagingSenderId: "893499888790",
+    appId: "1:893499888790:web:d984aa70818659dc4c1eb7",
+    measurementId: "G-BE871XQN2R"
 };
 
 // Initialize with a unique name
