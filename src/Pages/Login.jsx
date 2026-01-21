@@ -17,7 +17,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
       const user = userCredential.user;
       // Check for admin claim securely
       const idTokenResult = await user.getIdTokenResult();
@@ -27,8 +27,8 @@ export default function Login() {
         navigate("/"); // Or navigate to a user dashboard or show extra features
       }
     } catch (err) {
-      // Show the full error message for debugging
-      setError(err.message || "Invalid email or password");
+      // Show a generic message to the user; log details to console
+      setError("Failed to login. Check credentials or try again later.");
       console.error("Firebase Auth Error:", err);
     } finally {
       setLoading(false);

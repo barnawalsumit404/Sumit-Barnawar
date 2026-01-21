@@ -11,6 +11,8 @@ import SwipeableViews from "react-swipeable-views";
 import CardProject from "../components/CardProject";
 import Certificate from "../components/Certificate";
 import TechStackIcon from "../components/TechStackIcon";
+import { auth, db } from "../firebase";
+import { collection, getDocs } from "firebase/firestore";
 import { Code, Award, Boxes } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -116,8 +118,10 @@ const techStacks = [
 export default function FullWidthTabs() {
   const theme = useTheme();
   const [value, setValue] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [fetchError, setFetchError] = useState(null);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllCertificates, setShowAllCertificates] = useState(false);
   const isMobile = window.innerWidth < 768;
@@ -129,6 +133,20 @@ export default function FullWidthTabs() {
       once: false, // This will make animations occur only once
     });
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Ensure active tab resets to Projects when user logs out
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setValue(0);
+    }
+  }, [isLoggedIn]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -154,8 +172,11 @@ export default function FullWidthTabs() {
       // Store in localStorage
       localStorage.setItem("projects", JSON.stringify(projectData));
       localStorage.setItem("certificates", JSON.stringify(certificateData));
+      setFetchError(null);
     } catch (error) {
       console.error("Error fetching data:", error);
+      // Avoid exposing server details in UI — show a generic message
+      setFetchError("Failed to load portfolio data. Please try again later.");
     }
   }, []);
 
@@ -296,8 +317,44 @@ export default function FullWidthTabs() {
   ];
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    // Decide where to load public data from: try Cloud Function, fallback to cached data
+    const loadPublic = async () => {
+      // Attempt Cloud Function if env var is set
+      const FUNC_URL = process.env.REACT_APP_PORTFOLIO_FUNC_URL;
+      if (FUNC_URL) {
+        try {
+          const resp = await fetch(FUNC_URL, { headers: { Accept: 'application/json' } });
+          if (resp.ok) {
+            const json = await resp.json();
+            if (Array.isArray(json.projects)) setProjects(json.projects);
+            if (Array.isArray(json.certificates)) setCertificates(json.certificates);
+            setFetchError(null);
+            return;
+          } else {
+            console.warn('Public function responded with', resp.status);
+          }
+        } catch (err) {
+          console.warn('Public fetch failed:', err);
+        }
+      }
+
+      // Fallback to cached localStorage
+      try {
+        const cachedProjects = localStorage.getItem('projects');
+        const cachedCertificates = localStorage.getItem('certificates');
+        if (cachedProjects) setProjects(JSON.parse(cachedProjects));
+        if (cachedCertificates) setCertificates(JSON.parse(cachedCertificates));
+      } catch (e) {
+        console.warn('Failed to read cached data:', e);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchData();
+    } else {
+      loadPublic();
+    }
+  }, [fetchData, isLoggedIn]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -328,6 +385,30 @@ export default function FullWidthTabs() {
           Each section represents a milestone in my continuous learning path.
         </p>
       </div>
+      {fetchError && (
+        <div className="mb-4 relative z-[9999] pointer-events-auto">
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md flex items-center justify-between relative z-[9999] pointer-events-auto">
+            <div className="text-sm">{fetchError}</div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setFetchError(null);
+                  fetchData();
+                }}
+                className="px-3 py-1.5 bg-red-600 text-white rounded-md text-sm pointer-events-auto"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => setFetchError(null)}
+                className="px-3 py-1.5 bg-transparent border border-red-200 text-red-600 rounded-md text-sm pointer-events-auto"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Box sx={{ width: "100%" }}>
         {/* AppBar and Tabs section - unchanged */}
@@ -399,21 +480,13 @@ export default function FullWidthTabs() {
               },
             }}
           >
-            <Tab
-              icon={<Code className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Projects"
-              {...a11yProps(0)}
-            />
-            <Tab
-              icon={<Award className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Gallery"
-              {...a11yProps(1)}
-            />
-            <Tab
-              icon={<Boxes className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Blogs"
-              {...a11yProps(2)}
-            />
+            {[{ key: 'projects', icon: <Code className="mb-2 w-5 h-5 transition-all duration-300" />, label: 'Projects' },
+              { key: 'gallery', icon: <Award className="mb-2 w-5 h-5 transition-all duration-300" />, label: 'Gallery' },
+              { key: 'blogs', icon: <Boxes className="mb-2 w-5 h-5 transition-all duration-300" />, label: 'Blogs' }]
+              .filter(tab => tab.key !== 'gallery' || isLoggedIn)
+              .map((tab, idx) => (
+                <Tab key={tab.key} icon={tab.icon} label={tab.label} {...a11yProps(idx)} />
+              ))}
           </Tabs>
         </AppBar>
 
@@ -422,60 +495,79 @@ export default function FullWidthTabs() {
           index={value}
           onChangeIndex={setValue}
         >
-          <TabPanel value={value} index={0} dir={theme.direction}>
-            <div className="container mx-auto flex justify-center items-center overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-5">
-                {displayedProjects.map((project, index) => (
-                  <div
-                    key={project.id || index}
-                    data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                    data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
-                  >
-                    <CardProject
-                      Img={project.Img}
-                      Title={project.Title}
-                      Description={project.Description}
-                      Link={project.Link}
-                      id={project.id}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-            {(projectsToShow.length > initialItems) && (
-              <div className="mt-6 w-full flex justify-start">
-                <ToggleButton
-                  onClick={() => toggleShowMore('projects')}
-                  isShowingMore={showAllProjects}
-                />
-              </div>
-            )}
-          </TabPanel>
-          <TabPanel value={value} index={1} dir={theme.direction}>
-            <div className="container mx-auto flex flex-col items-center justify-center overflow-hidden pb-[5%]">
-              <h3 className="text-2xl font-bold mb-4 text-blue-700">Gallery</h3>
-              <p className="text-center text-[#475569] max-w-xl mb-6">A visual journey through my work and memorable moments. Gallery coming soon.</p>
-              <div className="text-[#A3A3A3] text-base">No gallery items yet. Coming soon!</div>
-            </div>
-          </TabPanel>
+          {([{ key: 'projects' }, { key: 'gallery' }, { key: 'blogs' }]
+            .filter(tab => tab.key !== 'gallery' || isLoggedIn)
+            .map((tab, idx) => {
+              if (tab.key === 'projects') {
+                return (
+                  <TabPanel key={tab.key} value={value} index={idx} dir={theme.direction}>
+                    <div className="container mx-auto flex justify-center items-center overflow-hidden">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-5">
+                        {displayedProjects.map((project, index) => (
+                          <div
+                            key={project.id || index}
+                            data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
+                            data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
+                          >
+                            <CardProject
+                              Img={project.Img}
+                              Title={project.Title}
+                              Description={project.Description}
+                              Link={project.Link}
+                              id={project.id}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {(projectsToShow.length > initialItems) && (
+                      <div className="mt-6 w-full flex justify-start">
+                        <ToggleButton
+                          onClick={() => toggleShowMore('projects')}
+                          isShowingMore={showAllProjects}
+                        />
+                      </div>
+                    )}
+                  </TabPanel>
+                );
+              }
 
-          <TabPanel value={value} index={2} dir={theme.direction}>
-            <div className="container mx-auto flex justify-center items-center overflow-hidden pb-[5%]">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 lg:gap-8 gap-5">
-                {techStacks.map((stack, index) => (
-                  <div
-                    key={index}
-                    data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                    data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
-                  >
-                    <TechStackIcon TechStackIcon={stack.icon} Language={stack.language} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </TabPanel>
-        </SwipeableViews>
-      </Box>
+              if (tab.key === 'gallery') {
+                return (
+                  <TabPanel key={tab.key} value={value} index={idx} dir={theme.direction}>
+                    <div className="container mx-auto flex flex-col items-center justify-center overflow-hidden pb-[5%]">
+                      <h3 className="text-2xl font-bold mb-4 text-blue-700">Gallery</h3>
+                      <p className="text-center text-[#475569] max-w-xl mb-6">A visual journey through my work and memorable moments. Gallery coming soon.</p>
+                      <div className="text-[#A3A3A3] text-base">No gallery items yet. Coming soon!</div>
+                    </div>
+                  </TabPanel>
+                );
+              }
+
+              if (tab.key === 'blogs') {
+                return (
+                  <TabPanel key={tab.key} value={value} index={idx} dir={theme.direction}>
+                    <div className="container mx-auto flex justify-center items-center overflow-hidden pb-[5%]">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 lg:gap-8 gap-5">
+                        {techStacks.map((stack, index) => (
+                          <div
+                            key={index}
+                            data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
+                            data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
+                          >
+                            <TechStackIcon TechStackIcon={stack.icon} Language={stack.language} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </TabPanel>
+                );
+              }
+
+              return null;
+            }))}
+          </SwipeableViews>
+        </Box>
     </div>
   );
 }
