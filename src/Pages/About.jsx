@@ -165,8 +165,8 @@ const AboutPage = () => {
       icon: Award,
       color: "from-gray-500 to-gray-700",
       value: totalCertificates,
-      label: "Certificates",
-      description: "Professional skills validated",
+      label: "Blogs",
+      description: "Sharing insights, tutorials, and coding journeys",
       animation: "fade-up",
     },
     {

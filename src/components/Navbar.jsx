@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import { auth } from "../firebase";
+import LogoutButton from "./LogoutButton";
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [activeSection, setActiveSection] = useState("Home");
     
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            setIsLoggedIn(!!user);
+        });
+        return () => unsubscribe();
+    }, []);
+
     const navItems = [
         { href: "#Home", label: "Home" },
         { href: "#About", label: "About" },
@@ -16,17 +26,20 @@ const Navbar = () => {
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 20);
-            const sections = navItems.map(item => {
-                const section = document.querySelector(item.href);
-                if (section) {
-                    return {
-                        id: item.href.replace("#", ""),
-                        offset: section.offsetTop - 550,
-                        height: section.offsetHeight
-                    };
-                }
-                return null;
-            }).filter(Boolean);
+            const sections = navItems
+                .filter(item => !item.isRoute && item.href.startsWith('#'))
+                .map(item => {
+                    const section = document.querySelector(item.href);
+                    if (section) {
+                        return {
+                            id: item.href.replace("#", ""),
+                            offset: section.offsetTop - 550,
+                            height: section.offsetHeight
+                        };
+                    }
+                    return null;
+                })
+                .filter(Boolean);
 
             const currentPosition = window.scrollY;
             const active = sections.find(section => 
@@ -53,16 +66,19 @@ const Navbar = () => {
     }, [isOpen]);
 
     const scrollToSection = (e, href) => {
-        e.preventDefault();
-        const section = document.querySelector(href);
-        if (section) {
-            const top = section.offsetTop - 100;
-            window.scrollTo({
-                top: top,
-                behavior: "smooth"
-            });
+        // Only handle scroll for hash links
+        if (href.startsWith('#')) {
+            e.preventDefault();
+            const section = document.querySelector(href);
+            if (section) {
+                const top = section.offsetTop - 100;
+                window.scrollTo({
+                    top: top,
+                    behavior: "smooth"
+                });
+            }
+            setIsOpen(false);
         }
-        setIsOpen(false);
     };
 
     return (
@@ -117,6 +133,17 @@ const Navbar = () => {
                                 />
                             </a>
                         ))}
+                        {isLoggedIn ? (
+                            <LogoutButton />
+                        ) : (
+                            <a
+                                href="/login"
+                                className="group relative px-1 py-2 text-sm font-medium"
+                                style={{ color: '#e2d3fd' }}
+                            >
+                                <span className="relative z-10 transition-colors duration-300 font-semibold">Login</span>
+                            </a>
+                        )}
                     </div>
                 </div>
     
@@ -168,6 +195,21 @@ const Navbar = () => {
                             {item.label}
                         </a>
                     ))}
+                    {isLoggedIn ? (
+                        <LogoutButton />
+                    ) : (
+                        <a
+                            href="/login"
+                            className="block px-4 py-3 text-lg font-medium text-[#e2d3fd]"
+                            style={{
+                                transitionDelay: `${navItems.length * 100}ms`,
+                                transform: isOpen ? "translateX(0)" : "translateX(50px)",
+                                opacity: isOpen ? 1 : 0,
+                            }}
+                        >
+                            Login
+                        </a>
+                    )}
                 </div>
             </div>
         </div>

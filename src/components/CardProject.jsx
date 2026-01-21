@@ -26,11 +26,13 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id }) => {
       <div className="relative overflow-hidden rounded-lg bg-white border border-[#E5E7EB] shadow-sm hover:shadow-md transition-all duration-300">
         <div className="relative p-0">
           <div className="relative overflow-hidden rounded-t-lg">
-            <img
-              src={Img}
-              alt={Title}
-              className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-500"
-            />
+                <div className="w-full h-48 md:h-56 rounded-t-lg overflow-hidden flex items-center justify-center bg-[#F8FAFC] p-3">
+                  <img
+                    src={Img}
+                    alt={Title}
+                    className="w-[95%] h-[95%] object-cover rounded-lg shadow-sm"
+                  />
+                </div>
           </div>
           <div className="p-5 space-y-3">
             <h3 className="text-lg font-semibold text-[#0F172A]">

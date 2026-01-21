@@ -1,20 +1,23 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore"
-import { collection, addDoc, getDocs } from "@firebase/firestore"; // Perbarui ini
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { collection, addDoc, getDocs } from "@firebase/firestore";
 
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyB-lfUt1adpQ0KYcFFW_oAWTJVfHDOOZy8",
-  authDomain: "portofolio-web-3e8e8.firebaseapp.com",
-  projectId: "portofolio-web-3e8e8",
-  storageBucket: "portofolio-web-3e8e8.appspot.com",
-  messagingSenderId: "25195509306",
-  appId: "1:25195509306:web:2b635dcf997137bf612703"
+  apiKey: "AIzaSyBM4YuKWCPxKJnFnsW1KQWTWSuIG8JKzlw",
+  authDomain: "sumit-portfolio-1efc3.firebaseapp.com",
+  projectId: "sumit-portfolio-1efc3",
+  storageBucket: "sumit-portfolio-1efc3.firebasestorage.app",
+  messagingSenderId: "893499888790",
+  appId: "1:893499888790:web:d984aa70818659dc4c1eb7",
+  measurementId: "G-BE871XQN2R"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-export { db, collection, addDoc };
+export { db, auth, collection, addDoc };

@@ -1,20 +1,19 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { db, collection } from "../firebase";
-import { getDocs } from "firebase/firestore";
-import PropTypes from "prop-types";
-import SwipeableViews from "react-swipeable-views";
 import { useTheme } from "@mui/material/styles";
+
+import React, { useEffect, useState, useCallback } from "react";
+import PropTypes from "prop-types";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import AppBar from "@mui/material/AppBar";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
+import SwipeableViews from "react-swipeable-views";
 import CardProject from "../components/CardProject";
+import Certificate from "../components/Certificate";
 import TechStackIcon from "../components/TechStackIcon";
+import { Code, Award, Boxes } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
-import Certificate from "../components/Certificate";
-import { Code, Award, Boxes } from "lucide-react";
 
 // Separate ShowMore/ShowLess button component
 const ToggleButton = ({ onClick, isShowingMore }) => (
@@ -160,6 +159,142 @@ export default function FullWidthTabs() {
     }
   }, []);
 
+
+  // Demo projects fallback
+  // Replace with your real projects
+  const demoProjects = [
+    {
+      id: "Aritmatika Solver",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "Aritmatika Solver",
+      Description: "Program ini dirancang untuk mempermudah pengguna dalam menyelesaikan soal-soal Aritmatika secara otomatis dengan menggunakan bahasa pemrograman Python.",
+      Link: "/project/Aritmatika%20Solver",
+      TechStack: ["React", "Tailwind", "Firebase"],
+      Features: ["Step-by-step solutions", "Mobile friendly", "Dark mode"],
+      Github: "https://github.com/yourusername/aritmatika-solver"
+    },
+    {
+      id: "AutoChat-Discord",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "AutoChat-Discord",
+      Description: "AutoChat-Discord adalah bot yang dibuat untuk mengirim pesan otomatis ke channel Discord sesuai jadwal yang ditentukan.",
+      Link: "/project/AutoChat-Discord",
+      TechStack: ["Node JS", "Discord.js"],
+      Features: ["Schedule messages", "Easy setup", "Multiple channels"],
+      Github: "https://github.com/yourusername/autochat-discordbot"
+    },
+    {
+      id: "Buku Catatan",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "Buku Catatan",
+      Description: "Buku Catatan adalah aplikasi sederhana untuk mencatat dan mengelola tugas atau ide secara praktis.",
+      Link: "/project/Buku%20Catatan",
+      TechStack: ["React", "Firebase"],
+      Features: ["Add/edit/delete notes", "Search notes", "Cloud sync"],
+      Github: "https://github.com/yourusername/buku-catatan"
+    },
+    {
+      id: "Growtopia-Calculator",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "Growtopia-Calculator",
+      Description: "Growtopia-Calculator membantu pemain Growtopia menghitung keuntungan dan mengelola item secara efisien.",
+      Link: "/project/Growtopia-Calculator",
+      TechStack: ["React", "Tailwind"],
+      Features: ["Profit calculation", "Item database", "Responsive UI"],
+      Github: "https://github.com/yourusername/growtopia-calculator"
+    },
+    {
+      id: "IT Support Bekasi",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "IT Support Bekasi",
+      Description: "Website IT Support Bekasi adalah proyek yang saya buat atas permintaan guru di sekolah, untuk menyediakan layanan IT.",
+      Link: "/project/IT%20Support%20Bekasi",
+      TechStack: ["HTML", "CSS", "Bootstrap"],
+      Features: ["Service listing", "Contact form", "Location map"],
+      Github: "https://github.com/yourusername/it-support-bekasi"
+    },
+    {
+      id: "Oprec24",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "Oprec 24",
+      Description: "Oprec 24 adalah platform rekrutmen online untuk pendaftaran dan seleksi anggota baru tahun 2024.",
+      Link: "/project/Oprec24",
+      TechStack: ["React", "Node JS"],
+      Features: ["Online registration", "Applicant tracking", "Admin dashboard"],
+      Github: "https://github.com/yourusername/oprec24"
+    },
+    {
+      id: "Portofolio-V4",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "Portofolio-V4",
+      Description: "Portofolio-V4 adalah versi terbaru dari website portofolio saya dengan tampilan modern dan fitur showcase proyek.",
+      Link: "/project/Portofolio-V4",
+      TechStack: ["React", "Tailwind", "Vite"],
+      Features: ["Modern design", "Responsive layout", "Project showcase"],
+      Github: "https://github.com/yourusername/portofolio-v4"
+    },
+    {
+      id: "QR Code Generator",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "QR Code Generator",
+      Description: "QR Code Generator adalah aplikasi untuk membuat kode QR dari teks atau tautan secara instan.",
+      Link: "/project/QR%20Code%20Generator",
+      TechStack: ["React", "JavaScript"],
+      Features: ["Instant QR generation", "Download as image", "Custom colors"],
+      Github: "https://github.com/yourusername/qr-code-generator"
+    },
+    {
+      id: "The-Cats",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "The Cats",
+      Description: "The Cats adalah aplikasi galeri yang menampilkan berbagai ras kucing dan fakta menarik tentang kucing.",
+      Link: "/project/The-Cats",
+      TechStack: ["React", "API"],
+      Features: ["Cat breed info", "Image gallery", "Search cats"],
+      Github: "https://github.com/yourusername/the-cats"
+    },
+    {
+      id: "Web Kelas V1",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "Web Kelas V1",
+      Description: "Web Kelas V1 adalah versi pertama aplikasi manajemen kelas untuk mengelola siswa dan tugas.",
+      Link: "/project/Web%20Kelas%20V1",
+      TechStack: ["HTML", "CSS", "JavaScript"],
+      Features: ["Class list", "Assignments", "Announcements"],
+      Github: "https://github.com/yourusername/web-kelas-v1"
+    },
+    {
+      id: "Web Kelas V2",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "Web Kelas V2",
+      Description: "Web Kelas V2 adalah pengembangan dari versi sebelumnya dengan fitur dashboard siswa dan upload tugas.",
+      Link: "/project/Web%20Kelas%20V2",
+      TechStack: ["React", "Firebase"],
+      Features: ["Student dashboard", "Assignment upload", "Notifications"],
+      Github: "https://github.com/yourusername/web-kelas-v2"
+    },
+    {
+      id: "WhatsApp Clone",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "WhatsApp Clone",
+      Description: "WhatsApp Clone adalah aplikasi tiruan WhatsApp dengan fitur chat real-time dan grup.",
+      Link: "/project/WhatsApp%20Clone",
+      TechStack: ["React", "Node JS", "Socket.io"],
+      Features: ["Real-time chat", "Group messaging", "Media sharing"],
+      Github: "https://github.com/yourusername/whatsapp-clone"
+    },
+    {
+      id: "conexatindo",
+      Img: "/src/assets/images/profile.jpg",
+      Title: "Company Profile",
+      Description: "Company Profile (conexatindo) adalah website profil perusahaan yang menampilkan layanan dan kontak.",
+      Link: "/project/conexatindo",
+      TechStack: ["HTML", "CSS", "Bootstrap"],
+      Features: ["About company", "Service showcase", "Contact form"],
+      Github: "https://github.com/yourusername/conexatindo"
+    },
+  ];
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -176,7 +311,9 @@ export default function FullWidthTabs() {
     }
   }, []);
 
-  const displayedProjects = showAllProjects ? projects : projects.slice(0, initialItems);
+  // Always show demo projects if Firestore is empty
+  const projectsToShow = projects.length > 0 ? projects : demoProjects;
+  const displayedProjects = showAllProjects ? projectsToShow : projectsToShow.slice(0, initialItems);
   const displayedCertificates = showAllCertificates ? certificates : certificates.slice(0, initialItems);
 
   return (
@@ -269,12 +406,12 @@ export default function FullWidthTabs() {
             />
             <Tab
               icon={<Award className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Certificates"
+              label="Gallery"
               {...a11yProps(1)}
             />
             <Tab
               icon={<Boxes className="mb-2 w-5 h-5 transition-all duration-300" />}
-              label="Tech Stack"
+              label="Blogs"
               {...a11yProps(2)}
             />
           </Tabs>
@@ -305,7 +442,7 @@ export default function FullWidthTabs() {
                 ))}
               </div>
             </div>
-            {projects.length > initialItems && (
+            {(projectsToShow.length > initialItems) && (
               <div className="mt-6 w-full flex justify-start">
                 <ToggleButton
                   onClick={() => toggleShowMore('projects')}
@@ -314,29 +451,12 @@ export default function FullWidthTabs() {
               </div>
             )}
           </TabPanel>
-
           <TabPanel value={value} index={1} dir={theme.direction}>
-            <div className="container mx-auto flex justify-center items-center overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-3 md:gap-5 gap-4">
-                {displayedCertificates.map((certificate, index) => (
-                  <div
-                    key={index}
-                    data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                    data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
-                  >
-                    <Certificate ImgSertif={certificate.Img} />
-                  </div>
-                ))}
-              </div>
+            <div className="container mx-auto flex flex-col items-center justify-center overflow-hidden pb-[5%]">
+              <h3 className="text-2xl font-bold mb-4 text-blue-700">Gallery</h3>
+              <p className="text-center text-[#475569] max-w-xl mb-6">A visual journey through my work and memorable moments. Gallery coming soon.</p>
+              <div className="text-[#A3A3A3] text-base">No gallery items yet. Coming soon!</div>
             </div>
-            {certificates.length > initialItems && (
-              <div className="mt-6 w-full flex justify-start">
-                <ToggleButton
-                  onClick={() => toggleShowMore('certificates')}
-                  isShowingMore={showAllCertificates}
-                />
-              </div>
-            )}
           </TabPanel>
 
           <TabPanel value={value} index={2} dir={theme.direction}>

@@ -9,7 +9,11 @@ import Portofolio from "./Pages/Portofolio";
 import ContactPage from "./Pages/Contact";
 import ProjectDetails from "./components/ProjectDetail";
 import WelcomeScreen from "./Pages/WelcomeScreen";
+import Login from "./Pages/Login";
+import AdminDashboard from "./Pages/AdminDashboard";
+import ProtectedAdminRoute from "./Pages/ProtectedAdminRoute";
 import { AnimatePresence } from 'framer-motion';
+import NotFound from "./Pages/NotFound";
 
 const LandingPage = ({ showWelcome, setShowWelcome }) => {
   return (
@@ -72,6 +76,13 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage showWelcome={showWelcome} setShowWelcome={setShowWelcome} />} />
         <Route path="/project/:id" element={<ProjectPageLayout />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/ownerSumit" element={
+          <ProtectedAdminRoute>
+            <AdminDashboard />
+          </ProtectedAdminRoute>
+        } />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
