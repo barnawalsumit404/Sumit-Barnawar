@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import Portofolio from "./Pages/Portofolio";
 import ContactPage from "./Pages/Contact";
 import ProjectDetails from "./components/ProjectDetail";
+import BlogDetail from "./components/BlogDetail";
 import WelcomeScreen from "./Pages/WelcomeScreen";
 import Login from "./Pages/Login";
 import AdminDashboard from "./Pages/AdminDashboard";
@@ -68,6 +69,12 @@ const ProjectPageLayout = () => (
   </>
 );
 
+const BlogPageLayout = () => (
+  <>
+    <BlogDetail />
+  </>
+);
+
 function App() {
   const [showWelcome, setShowWelcome] = useState(true);
 
@@ -75,7 +82,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage showWelcome={showWelcome} setShowWelcome={setShowWelcome} />} />
-        <Route path="/project/:id" element={<ProjectPageLayout />} />
+        <Route path="/project/:title" element={<ProjectPageLayout />} />
+        <Route path="/blog/:title" element={<BlogPageLayout />} />
         <Route path="/login" element={<Login />} />
         <Route path="/ownerSumit" element={
           <ProtectedAdminRoute>

@@ -58,7 +58,7 @@ const CardProject = ({ Img, Title, Description, Link: ProjectLink, id }) => {
               )}
               {id ? (
                 <Link
-                  to={`/project/${id}`}
+                  to={`/project/${encodeURIComponent(Title)}`}
                   onClick={handleDetails}
                   className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 text-sm font-medium"
                 >

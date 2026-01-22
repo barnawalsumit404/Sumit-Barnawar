@@ -1,0 +1,85 @@
+FIRESTORE SECURITY RULES FOR PROJECTS ADMIN CRUD
+================================================
+
+**STEP 1: UPDATE FIRESTORE SECURITY RULES**
+
+Go to Firebase Console > Your Project > Firestore Database > Rules tab
+
+DELETE ALL existing rules and paste EXACTLY this:
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Portfolio Comments
+    match /portfolio-comments/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Projects - Authenticated users can read, only admins can write
+    match /projects/{document=**} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Certificates - Authenticated users can read, only admins can write
+    match /certificates/{document=**} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Gallery - (will enable later)
+    match /gallery/{document=**} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Blogs - (will enable later)
+    match /blogs/{document=**} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+  }
+}
+
+Then click "PUBLISH"
+
+---
+
+**STEP 2: SET ADMIN CUSTOM CLAIM**
+
+1. Go to Firebase Console > Authentication > Users
+2. Click on YOUR ADMIN USER (the one you use to login)
+3. Look for "Custom Claims" button (usually top right near the user email)
+4. Click "Custom Claims"
+5. Paste this EXACTLY:
+   
+   { "admin": true }
+
+6. Click "Save"
+
+---
+
+**STEP 3: TEST THE ADMIN PANEL**
+
+1. Log out from your portfolio
+2. Log in again with your admin account (to refresh the token with new admin claim)
+3. You should see "Owner Sumit" in the navbar
+4. You should be redirected to /admin
+5. You should see all 13 existing projects loaded
+6. Click "Edit" to edit an existing project
+7. Click "Delete" to delete a project
+8. Click "Add Project" to add a new project
+
+---
+
+**IF STILL NOT WORKING:**
+
+Check your browser console (F12 > Console tab) for error messages and share them
+
+Common errors:
+- "Permission denied" = Admin claim not set or security rules not published
+- "Failed to add projects" = Check the exact error message in console
+- "Projects not loading" = Check if Firestore has "projects" collection with data
+
+

@@ -91,15 +91,38 @@ const handleGithubClick = (githubLink) => {
 };
 
 const ProjectDetails = () => {
-  const { id } = useParams();
+  const { title } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    const decodedTitle = decodeURIComponent(title);
     const storedProjects = JSON.parse(localStorage.getItem("projects")) || [];
-    const selectedProject = storedProjects.find((p) => String(p.id) === id);
+    
+    console.log("Looking for project with title:", decodedTitle);
+    console.log("Stored projects:", storedProjects);
+    
+    // Search by title (case-insensitive)
+    let selectedProject = storedProjects.find((p) => {
+      const projectTitle = p.Title || p.title || p.name || "";
+      return String(projectTitle).toLowerCase() === decodedTitle.toLowerCase();
+    });
+    
+    console.log("Found in stored projects:", selectedProject);
+    
+    // Fallback: if not found in localStorage, use demo projects
+    if (!selectedProject) {
+      const demoProjects = [
+        { id: "Aritmatika Solver", Title: "Aritmatika Solver", Description: "Program ini dirancang untuk mempermudah pengguna dalam menyelesaikan soal-soal Aritmatika secara otomatis dengan menggunakan bahasa pemrograman Python.", Img: "/src/assets/images/profile.jpg", Link: "/project/Aritmatika%20Solver", TechStack: ["React", "Tailwind", "Firebase"], Features: ["Step-by-step solutions", "Mobile friendly", "Dark mode"], Github: "https://github.com/yourusername/aritmatika-solver" },
+        { id: "AutoChat-Discord", Title: "AutoChat-Discord", Description: "AutoChat-Discord adalah bot yang dibuat untuk mengirim pesan otomatis ke channel Discord sesuai jadwal yang ditentukan.", Img: "/src/assets/images/profile.jpg", Link: "/project/AutoChat-Discord", TechStack: ["Node JS", "Discord.js"], Features: ["Schedule messages", "Easy setup", "Multiple channels"], Github: "https://github.com/yourusername/autochat-discordbot" },
+        { id: "Buku Catatan", Title: "Buku Catatan", Description: "Buku Catatan adalah aplikasi sederhana untuk mencatat dan mengelola tugas atau ide secara praktis.", Img: "/src/assets/images/profile.jpg", Link: "/project/Buku%20Catatan", TechStack: ["React", "Firebase"], Features: ["Add/edit/delete notes", "Search notes", "Cloud sync"], Github: "https://github.com/yourusername/buku-catatan" },
+        { id: "Growtopia-Calculator", Title: "Growtopia-Calculator", Description: "Growtopia-Calculator membantu pemain Growtopia menghitung keuntungan dan mengelola item secara efisien.", Img: "/src/assets/images/profile.jpg", Link: "/project/Growtopia-Calculator", TechStack: ["React", "Tailwind"], Features: ["Profit calculation", "Item database", "Responsive UI"], Github: "https://github.com/yourusername/growtopia-calculator" },
+      ];
+      selectedProject = demoProjects.find((p) => String(p.Title).toLowerCase() === decodedTitle.toLowerCase());
+      console.log("Found in demo projects:", selectedProject);
+    }
     
     if (selectedProject) {
       const enhancedProject = {
@@ -109,8 +132,14 @@ const ProjectDetails = () => {
         Github: selectedProject.Github || 'https://github.com/EkiZR',
       };
       setProject(enhancedProject);
+    } else {
+      // If still not found, show error after a short delay
+      console.log("Project not found! Going back...");
+      setTimeout(() => {
+        navigate(-1);
+      }, 1500);
     }
-  }, [id]);
+  }, [title, navigate]);
 
   if (!project) {
     return (

@@ -1,0 +1,70 @@
+DEBUG: PROJECTS NOT SHOWING WHEN LOGGED OUT
+==========================================
+
+STEP 1: VERIFY FIRESTORE RULES
+Go to Firebase Console > Firestore Database > Rules
+
+Check if you see "read: if true" for projects:
+
+Look for this section:
+match /projects/{document=**} {
+  allow read: if true;
+  allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+}
+
+If it says "read: if request.auth != null", that's the problem!
+It should say "read: if true"
+
+STEP 2: VERIFY IN BROWSER
+1. Log out from your site
+2. Open Browser DevTools (F12)
+3. Go to Console tab
+4. Look for messages:
+   - "Loaded from Firestore (public): X projects" = WORKING ✅
+   - "Firestore fetch error:" = BROKEN ❌
+5. Tell me what error message you see
+
+STEP 3: IF STILL NOT WORKING
+Your Firestore rules might be blocking public read. 
+
+EXACT RULES TO USE (copy paste exactly):
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /portfolio-comments/{document=**} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['content', 'userName', 'createdAt']);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /projects/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /certificates/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /gallery/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /blogs/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+  }
+}
+
+Then click PUBLISH and wait 1-2 minutes for changes to apply.
+
+STEP 4: TEST
+1. Refresh page (Ctrl+F5 or Cmd+Shift+R)
+2. Log out
+3. Check console for "Loaded from Firestore (public)" message
+4. Projects should now show!

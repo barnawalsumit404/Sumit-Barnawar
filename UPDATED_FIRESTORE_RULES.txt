@@ -1,0 +1,51 @@
+UPDATED FIRESTORE SECURITY RULES - PUBLIC READ ACCESS
+======================================================
+
+Go to Firebase Console > Firestore Database > Rules tab
+
+DELETE ALL current rules and paste EXACTLY this:
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /portfolio-comments/{document=**} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['content', 'userName', 'createdAt']);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Projects - PUBLIC READ, admin-only write
+    match /projects/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Certificates - PUBLIC READ, admin-only write
+    match /certificates/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Gallery - PUBLIC READ, admin-only write (for later)
+    match /gallery/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Blogs - PUBLIC READ, admin-only write (for later)
+    match /blogs/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+  }
+}
+
+Then click "PUBLISH"
+
+KEY CHANGES:
+- Changed projects read from "if request.auth != null" to "if true" (PUBLIC READ)
+- Changed certificates read from "if request.auth != null" to "if true" (PUBLIC READ)
+- Write access still requires admin: true custom claim
+
+Now all projects will show to EVERYONE (logged in or not), but only admins can add/edit/delete.

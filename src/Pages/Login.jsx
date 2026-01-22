@@ -22,7 +22,7 @@ export default function Login() {
       // Check for admin claim securely
       const idTokenResult = await user.getIdTokenResult();
       if (idTokenResult.claims.admin) {
-        navigate("/ownerSumit");
+        navigate("/admin");
       } else {
         navigate("/"); // Or navigate to a user dashboard or show extra features
       }

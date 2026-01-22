@@ -9,9 +9,23 @@ const Navbar = () => {
     const [activeSection, setActiveSection] = useState("Home");
     
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+    
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            setIsLoggedIn(!!user);
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                setIsLoggedIn(true);
+                try {
+                    const idTokenResult = await user.getIdTokenResult();
+                    setIsAdmin(!!idTokenResult.claims.admin);
+                } catch (error) {
+                    console.error("Error checking admin status:", error);
+                    setIsAdmin(false);
+                }
+            } else {
+                setIsLoggedIn(false);
+                setIsAdmin(false);
+            }
         });
         return () => unsubscribe();
     }, []);
@@ -100,7 +114,7 @@ const Navbar = () => {
                         onClick={(e) => scrollToSection(e, "#Home")}
                         className="text-xl font-bold bg-gradient-to-r from-[#a855f7] to-[#6366f1] bg-clip-text text-transparent"
                     >
-                    Sumit
+                    {isAdmin ? "Owner Sumit" : "Sumit"}
                     
                     </a>
                 </div>
@@ -167,15 +181,15 @@ const Navbar = () => {
     
         {/* Mobile Menu Overlay */}
         <div
-            className={`md:hidden h-2/5 fixed inset-0 bg-[#030014] transition-all duration-300 ease-in-out ${
+            className={`md:hidden fixed inset-0 bg-[#030014] transition-all duration-300 ease-in-out overflow-y-auto ${
                 isOpen
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-[-100%] pointer-events-none"
             }`}
             style={{ top: "64px" }}
         >
-            <div className="flex flex-col h-full">
-                <div className="px-4 py-6 space-y-4 flex-1 ">
+            <div className="flex flex-col">
+                <div className="px-4 py-6 space-y-4">
                     {navItems.map((item, index) => (
                         <a
                             key={item.label}

@@ -8,6 +8,7 @@ import AppBar from "@mui/material/AppBar";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import SwipeableViews from "react-swipeable-views";
+import { Link } from "react-router-dom";
 import CardProject from "../components/CardProject";
 import Certificate from "../components/Certificate";
 import TechStackIcon from "../components/TechStackIcon";
@@ -121,11 +122,15 @@ export default function FullWidthTabs() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [gallery, setGallery] = useState([]);
+  const [blogs, setBlogs] = useState([]);
   const [fetchError, setFetchError] = useState(null);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllCertificates, setShowAllCertificates] = useState(false);
+  const [showAllBlogs, setShowAllBlogs] = useState(false);
   const isMobile = window.innerWidth < 768;
   const initialItems = isMobile ? 4 : 6;
+  const initialBlogs = isMobile ? 10 : 15;
 
   useEffect(() => {
     // Initialize AOS once
@@ -152,10 +157,14 @@ export default function FullWidthTabs() {
     try {
       const projectCollection = collection(db, "projects");
       const certificateCollection = collection(db, "certificates");
+      const galleryCollection = collection(db, "gallery");
+      const blogsCollection = collection(db, "blogs");
 
-      const [projectSnapshot, certificateSnapshot] = await Promise.all([
+      const [projectSnapshot, certificateSnapshot, gallerySnapshot, blogsSnapshot] = await Promise.all([
         getDocs(projectCollection),
         getDocs(certificateCollection),
+        getDocs(galleryCollection),
+        getDocs(blogsCollection),
       ]);
 
       const projectData = projectSnapshot.docs.map((doc) => ({
@@ -165,13 +174,25 @@ export default function FullWidthTabs() {
       }));
 
       const certificateData = certificateSnapshot.docs.map((doc) => doc.data());
+      const galleryData = gallerySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      const blogsData = blogsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
       setProjects(projectData);
       setCertificates(certificateData);
+      setGallery(galleryData);
+      setBlogs(blogsData);
 
       // Store in localStorage
       localStorage.setItem("projects", JSON.stringify(projectData));
       localStorage.setItem("certificates", JSON.stringify(certificateData));
+      localStorage.setItem("gallery", JSON.stringify(galleryData));
+      localStorage.setItem("blogs", JSON.stringify(blogsData));
       setFetchError(null);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -320,7 +341,7 @@ export default function FullWidthTabs() {
     // Decide where to load public data from: try Cloud Function, fallback to cached data
     const loadPublic = async () => {
       // Attempt Cloud Function if env var is set
-      const FUNC_URL = process.env.REACT_APP_PORTFOLIO_FUNC_URL;
+      const FUNC_URL = import.meta.env.VITE_PORTFOLIO_FUNC_URL;
       if (FUNC_URL) {
         try {
           const resp = await fetch(FUNC_URL, { headers: { Accept: 'application/json' } });
@@ -338,12 +359,63 @@ export default function FullWidthTabs() {
         }
       }
 
+      // Try to fetch from Firestore directly (now that projects are public)
+      try {
+        const projectCollection = collection(db, "projects");
+        const certificateCollection = collection(db, "certificates");
+        const galleryCollection = collection(db, "gallery");
+        const blogsCollection = collection(db, "blogs");
+
+        const [projectSnapshot, certificateSnapshot, gallerySnapshot, blogsSnapshot] = await Promise.all([
+          getDocs(projectCollection),
+          getDocs(certificateCollection),
+          getDocs(galleryCollection),
+          getDocs(blogsCollection),
+        ]);
+
+        const projectData = projectSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          TechStack: doc.data().TechStack || [],
+        }));
+
+        const certificateData = certificateSnapshot.docs.map((doc) => doc.data());
+        const galleryData = gallerySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        const blogsData = blogsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        if (projectData.length > 0) {
+          setProjects(projectData);
+          setCertificates(certificateData);
+          setGallery(galleryData);
+          setBlogs(blogsData);
+          localStorage.setItem("projects", JSON.stringify(projectData));
+          localStorage.setItem("certificates", JSON.stringify(certificateData));
+          localStorage.setItem("gallery", JSON.stringify(galleryData));
+          localStorage.setItem("blogs", JSON.stringify(blogsData));
+          setFetchError(null);
+          console.log('Loaded from Firestore (public):', projectData.length, 'projects,', galleryData.length, 'gallery items,', blogsData.length, 'blogs');
+          return;
+        }
+      } catch (err) {
+        console.error('Firestore fetch error:', err);
+      }
+
       // Fallback to cached localStorage
       try {
         const cachedProjects = localStorage.getItem('projects');
         const cachedCertificates = localStorage.getItem('certificates');
+        const cachedGallery = localStorage.getItem('gallery');
+        const cachedBlogs = localStorage.getItem('blogs');
         if (cachedProjects) setProjects(JSON.parse(cachedProjects));
         if (cachedCertificates) setCertificates(JSON.parse(cachedCertificates));
+        if (cachedGallery) setGallery(JSON.parse(cachedGallery));
+        if (cachedBlogs) setBlogs(JSON.parse(cachedBlogs));
       } catch (e) {
         console.warn('Failed to read cached data:', e);
       }
@@ -363,8 +435,10 @@ export default function FullWidthTabs() {
   const toggleShowMore = useCallback((type) => {
     if (type === 'projects') {
       setShowAllProjects(prev => !prev);
-    } else {
+    } else if (type === 'certificates') {
       setShowAllCertificates(prev => !prev);
+    } else if (type === 'blogs') {
+      setShowAllBlogs(prev => !prev);
     }
   }, []);
 
@@ -372,6 +446,7 @@ export default function FullWidthTabs() {
   const projectsToShow = projects.length > 0 ? projects : demoProjects;
   const displayedProjects = showAllProjects ? projectsToShow : projectsToShow.slice(0, initialItems);
   const displayedCertificates = showAllCertificates ? certificates : certificates.slice(0, initialItems);
+  const displayedBlogs = showAllBlogs ? blogs : blogs.slice(0, initialBlogs);
 
   return (
     <div className="md:px-[10%] px-[5%] w-full sm:mt-0 mt-[3rem] bg-[#FFFFFF] overflow-hidden" id="Portofolio">
@@ -483,7 +558,6 @@ export default function FullWidthTabs() {
             {[{ key: 'projects', icon: <Code className="mb-2 w-5 h-5 transition-all duration-300" />, label: 'Projects' },
               { key: 'gallery', icon: <Award className="mb-2 w-5 h-5 transition-all duration-300" />, label: 'Gallery' },
               { key: 'blogs', icon: <Boxes className="mb-2 w-5 h-5 transition-all duration-300" />, label: 'Blogs' }]
-              .filter(tab => tab.key !== 'gallery' || isLoggedIn)
               .map((tab, idx) => (
                 <Tab key={tab.key} icon={tab.icon} label={tab.label} {...a11yProps(idx)} />
               ))}
@@ -496,7 +570,6 @@ export default function FullWidthTabs() {
           onChangeIndex={setValue}
         >
           {([{ key: 'projects' }, { key: 'gallery' }, { key: 'blogs' }]
-            .filter(tab => tab.key !== 'gallery' || isLoggedIn)
             .map((tab, idx) => {
               if (tab.key === 'projects') {
                 return (
@@ -536,9 +609,40 @@ export default function FullWidthTabs() {
                 return (
                   <TabPanel key={tab.key} value={value} index={idx} dir={theme.direction}>
                     <div className="container mx-auto flex flex-col items-center justify-center overflow-hidden pb-[5%]">
-                      <h3 className="text-2xl font-bold mb-4 text-blue-700">Gallery</h3>
-                      <p className="text-center text-[#475569] max-w-xl mb-6">A visual journey through my work and memorable moments. Gallery coming soon.</p>
-                      <div className="text-[#A3A3A3] text-base">No gallery items yet. Coming soon!</div>
+                      {gallery.length === 0 ? (
+                        <>
+                          <h3 className="text-2xl font-bold mb-4 text-blue-700">Gallery</h3>
+                          <p className="text-center text-[#475569] max-w-xl mb-6">A visual journey through my work and memorable moments.</p>
+                          <div className="text-[#A3A3A3] text-base">No gallery items yet.</div>
+                        </>
+                      ) : (
+                        <>
+                          <h3 className="text-2xl font-bold mb-4 text-blue-700">Gallery</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                            {gallery.map((item, index) => (
+                              <div
+                                key={item.id || index}
+                                data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
+                                data-aos-duration="1000"
+                                className="rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
+                              >
+                                {item.ImageUrl && (
+                                  <img
+                                    src={item.ImageUrl}
+                                    alt={item.Title}
+                                    className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
+                                  />
+                                )}
+                                <div className="p-4 bg-white">
+                                  <h4 className="font-bold text-lg text-gray-800">{item.Title}</h4>
+                                  <p className="text-gray-600 text-sm mt-2">{item.Description}</p>
+                                  {item.Category && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mt-2 inline-block">{item.Category}</span>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </TabPanel>
                 );
@@ -547,18 +651,51 @@ export default function FullWidthTabs() {
               if (tab.key === 'blogs') {
                 return (
                   <TabPanel key={tab.key} value={value} index={idx} dir={theme.direction}>
-                    <div className="container mx-auto flex justify-center items-center overflow-hidden pb-[5%]">
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 lg:gap-8 gap-5">
-                        {techStacks.map((stack, index) => (
-                          <div
-                            key={index}
-                            data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                            data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
-                          >
-                            <TechStackIcon TechStackIcon={stack.icon} Language={stack.language} />
+                    <div className="container mx-auto flex flex-col items-center justify-center overflow-hidden pb-[5%]">
+                      {blogs.length === 0 ? (
+                        <>
+                          <h3 className="text-2xl font-bold mb-4 text-blue-700">Blog Posts</h3>
+                          <p className="text-center text-[#475569] max-w-xl mb-6">Thoughts, experiences, and technical insights.</p>
+                          <div className="text-[#A3A3A3] text-base">No blog posts yet.</div>
+                        </>
+                      ) : (
+                        <>
+                          <h3 className="text-2xl font-bold mb-4 text-blue-700">Blog Posts</h3>
+                          <div className="space-y-6 w-full max-w-4xl">
+                            {displayedBlogs.map((blog, index) => (
+                              <Link
+                                key={blog.id || index}
+                                to={`/blog/${encodeURIComponent(blog.Title)}`}
+                                className="no-underline"
+                              >
+                                <div
+                                  data-aos={index % 2 === 0 ? "fade-up-right" : "fade-up-left"}
+                                  data-aos-duration="1000"
+                                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-500 cursor-pointer hover:bg-blue-50"
+                                >
+                                  <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                      <h4 className="font-bold text-xl text-gray-800 hover:text-blue-600 transition-colors">{blog.Title}</h4>
+                                      <p className="text-gray-500 text-sm">{blog.Date} • {blog.Author}</p>
+                                    </div>
+                                    {blog.Category && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">{blog.Category}</span>}
+                                  </div>
+                                  <p className="text-gray-700 mt-3">{blog.Content?.substring(0, 200)}...</p>
+                                  <button className="text-blue-600 hover:text-blue-800 font-medium text-sm mt-3">Read More →</button>
+                                </div>
+                              </Link>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                          {(blogs.length > initialBlogs) && (
+                            <div className="mt-6 w-full flex justify-start max-w-4xl">
+                              <ToggleButton
+                                onClick={() => toggleShowMore('blogs')}
+                                isShowingMore={showAllBlogs}
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </TabPanel>
                 );
